@@ -1,6 +1,7 @@
 import subprocess
 import json
 import sys
+import os
 import urllib.request
 
 # ============================================================
@@ -8,9 +9,6 @@ import urllib.request
 # ============================================================
 
 def read_file(filepath: str) -> str:
-    """
-    Lit le contenu d'un fichier et le retourne comme string.
-    """
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read()
@@ -20,11 +18,34 @@ def read_file(filepath: str) -> str:
         return f"ERROR: {str(e)}"
 
 
+def read_directory(dirpath: str) -> str:
+    """
+    Lit tous les fichiers .py d'un dossier (récursif) et les retourne
+    comme un seul string avec des séparateurs clairs.
+    """
+    py_files = []
+    for root, dirs, files in os.walk(dirpath):
+        # Ignorer les dossiers inutiles
+        dirs[:] = [d for d in dirs if d not in ["__pycache__", ".git", "venv", ".venv", "node_modules"]]
+        for file in files:
+            if file.endswith(".py"):
+                py_files.append(os.path.join(root, file))
+
+    if not py_files:
+        return f"ERROR: aucun fichier .py trouvé dans '{dirpath}'"
+
+    result = f"Found {len(py_files)} Python file(s):\n\n"
+    for filepath in sorted(py_files):
+        result += f"{'='*60}\n"
+        result += f"FILE: {filepath}\n"
+        result += f"{'='*60}\n"
+        result += read_file(filepath)
+        result += "\n\n"
+
+    return result
+
+
 def run_pylint(filepath: str) -> list:
-    """
-    Lance Pylint sur un fichier et retourne les issues en JSON.
-    Pylint analyse : style, imports inutiles, variables non utilisées, etc.
-    """
     result = subprocess.run(
         [sys.executable, "-m", "pylint", filepath, "--output-format=json"],
         capture_output=True,
@@ -36,11 +57,22 @@ def run_pylint(filepath: str) -> list:
         return []
 
 
+def run_pylint_directory(dirpath: str) -> list:
+    """
+    Lance Pylint sur tous les fichiers .py d'un dossier.
+    """
+    result = subprocess.run(
+        [sys.executable, "-m", "pylint", dirpath, "--output-format=json", "--recursive=y"],
+        capture_output=True,
+        text=True
+    )
+    try:
+        return json.loads(result.stdout)
+    except Exception:
+        return []
+
+
 def run_bandit(filepath: str) -> dict:
-    """
-    Lance Bandit sur un fichier et retourne les issues de sécurité en JSON.
-    Bandit détecte : passwords hardcodés, injections SQL, fonctions dangereuses, etc.
-    """
     result = subprocess.run(
         [sys.executable, "-m", "bandit", filepath, "-f", "json", "-q"],
         capture_output=True,
@@ -52,16 +84,23 @@ def run_bandit(filepath: str) -> dict:
         return {}
 
 
-def fetch_github_pr(pr_url: str) -> str:
+def run_bandit_directory(dirpath: str) -> dict:
     """
-    Fetche le diff d'une Pull Request GitHub via l'API.
-    Exemple d'URL : https://github.com/owner/repo/pull/123
-    Retourne le diff en texte brut.
+    Lance Bandit sur tous les fichiers .py d'un dossier (récursif).
     """
+    result = subprocess.run(
+        [sys.executable, "-m", "bandit", "-r", dirpath, "-f", "json", "-q"],
+        capture_output=True,
+        text=True
+    )
     try:
-        # Convertir l'URL normale en URL API
-        # https://github.com/owner/repo/pull/123
-        # → https://api.github.com/repos/owner/repo/pulls/123
+        return json.loads(result.stdout)
+    except Exception:
+        return {}
+
+
+def fetch_github_pr(pr_url: str) -> str:
+    try:
         parts = pr_url.replace("https://github.com/", "").split("/")
         owner = parts[0]
         repo = parts[1]
@@ -69,7 +108,6 @@ def fetch_github_pr(pr_url: str) -> str:
 
         api_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
 
-        # Fetcher le diff
         req = urllib.request.Request(
             api_url,
             headers={
@@ -85,8 +123,7 @@ def fetch_github_pr(pr_url: str) -> str:
 
 
 # ============================================================
-# DÉFINITIONS JSON des outils — ce qu'on donne au LLM
-# pour qu'il sache quels outils existent et comment les utiliser
+# DÉFINITIONS JSON des outils
 # ============================================================
 
 TOOLS_DEFINITIONS = [
@@ -94,7 +131,7 @@ TOOLS_DEFINITIONS = [
         "type": "function",
         "function": {
             "name": "read_file",
-            "description": "Lit le contenu d'un fichier Python local. Utilise cet outil en premier pour lire le code à reviewer.",
+            "description": "Lit le contenu d'un fichier Python local. Utilise cet outil pour lire UN fichier spécifique.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -110,8 +147,25 @@ TOOLS_DEFINITIONS = [
     {
         "type": "function",
         "function": {
+            "name": "read_directory",
+            "description": "Lit tous les fichiers .py d'un dossier récursivement. Utilise cet outil quand le target est un dossier/répertoire.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "dirpath": {
+                        "type": "string",
+                        "description": "Le chemin vers le dossier à analyser"
+                    }
+                },
+                "required": ["dirpath"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "run_pylint",
-            "description": "Lance Pylint sur un fichier Python pour détecter les problèmes de style, imports inutiles, variables non utilisées, mauvaises pratiques.",
+            "description": "Lance Pylint sur UN fichier Python pour détecter les problèmes de style, imports inutiles, variables non utilisées.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -127,8 +181,25 @@ TOOLS_DEFINITIONS = [
     {
         "type": "function",
         "function": {
+            "name": "run_pylint_directory",
+            "description": "Lance Pylint sur tous les fichiers .py d'un dossier récursivement. Utilise quand le target est un dossier.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "dirpath": {
+                        "type": "string",
+                        "description": "Le chemin vers le dossier à analyser"
+                    }
+                },
+                "required": ["dirpath"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "run_bandit",
-            "description": "Lance Bandit sur un fichier Python pour détecter les failles de sécurité : passwords hardcodés, injections, fonctions dangereuses.",
+            "description": "Lance Bandit sur UN fichier Python pour détecter les failles de sécurité.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -138,6 +209,23 @@ TOOLS_DEFINITIONS = [
                     }
                 },
                 "required": ["filepath"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_bandit_directory",
+            "description": "Lance Bandit sur tous les fichiers .py d'un dossier récursivement. Utilise quand le target est un dossier.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "dirpath": {
+                        "type": "string",
+                        "description": "Le chemin vers le dossier à analyser"
+                    }
+                },
+                "required": ["dirpath"]
             }
         }
     },
@@ -162,20 +250,22 @@ TOOLS_DEFINITIONS = [
 
 
 # ============================================================
-# DISPATCHER — exécute l'outil demandé par le LLM
+# DISPATCHER
 # ============================================================
 
 def execute_tool(tool_name: str, tool_args: dict):
-    """
-    Reçoit le nom de l'outil et ses arguments (décidés par le LLM),
-    exécute la bonne fonction, retourne le résultat.
-    """
     if tool_name == "read_file":
         return read_file(tool_args["filepath"])
+    elif tool_name == "read_directory":
+        return read_directory(tool_args["dirpath"])
     elif tool_name == "run_pylint":
         return run_pylint(tool_args["filepath"])
+    elif tool_name == "run_pylint_directory":
+        return run_pylint_directory(tool_args["dirpath"])
     elif tool_name == "run_bandit":
         return run_bandit(tool_args["filepath"])
+    elif tool_name == "run_bandit_directory":
+        return run_bandit_directory(tool_args["dirpath"])
     elif tool_name == "fetch_github_pr":
         return fetch_github_pr(tool_args["pr_url"])
     else:

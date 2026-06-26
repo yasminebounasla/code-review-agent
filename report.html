@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Review Report</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0d0d0d;
+            color: #e0e0e0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .header .target {
+            color: #888;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+
+        .header .date {
+            color: #555;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        /* SCORE */
+        .score-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid #ff9900;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .score-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff9900;
+        }
+
+        .score-label {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .summary {
+            flex: 1;
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* STATS */
+        .stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* ISSUES */
+        .section-title {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #222;
+        }
+
+        .issue-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+        }
+
+        .issue-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .issue-number {
+            color: #555;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .badge {
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .category {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .line {
+            margin-left: auto;
+            font-size: 0.8rem;
+            color: #555;
+            font-family: monospace;
+        }
+
+        .issue-message {
+            color: #ddd;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .suggestion {
+            background: #111;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        /* FIXED CODE */
+        .fixed-code-section {
+            margin-top: 30px;
+        }
+
+        pre {
+            background: #111;
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #a8ff78;
+            border: 1px solid #222;
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #333;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>🔍 Code Review Report</h1>
+        <div class="target">sample.py</div>
+        <div class="date">Generated on 2026-06-23 08:29</div>
+    </div>
+
+    <div class="score-section">
+        <div class="score-circle">
+            <span class="score-number">4</span>
+            <span class="score-label">/ 10</span>
+        </div>
+        <div class="summary">The code has several issues, including a hardcoded password, unused imports, and a missing final newline. The divide function does not handle division by zero and the unused_function is unnecessary. The code does not follow PEP 8 conventions and has several warnings.</div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number" style="color:#ff4d4d">1</div>
+            <div class="stat-label">HIGH</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" style="color:#ff9900">1</div>
+            <div class="stat-label">MEDIUM</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" style="color:#ffd700">3</div>
+            <div class="stat-label">LOW</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" style="color:#4d94ff">0</div>
+            <div class="stat-label">INFO</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" style="color:#fff">5</div>
+            <div class="stat-label">TOTAL</div>
+        </div>
+    </div>
+
+    <div class="issues-section">
+        <div class="section-title">⚠️ Issues Found (5)</div>
+        
+        <div class="issue-card" style="border-left: 4px solid #ff4d4d">
+            <div class="issue-header">
+                <span class="issue-number">#1</span>
+                <span class="badge" style="background:#ff4d4d">HIGH</span>
+                <span class="category">🔒 SECURITY</span>
+                <span class="line">Line 4</span>
+            </div>
+            <p class="issue-message">Hardcoded password</p>
+            <div class="suggestion">
+                <strong>💡 Fix:</strong> Use environment variables or a secure method to store passwords
+            </div>
+        </div>
+        
+        <div class="issue-card" style="border-left: 4px solid #ffd700">
+            <div class="issue-header">
+                <span class="issue-number">#2</span>
+                <span class="badge" style="background:#ffd700">LOW</span>
+                <span class="category">✏️ STYLE</span>
+                <span class="line">Line 1</span>
+            </div>
+            <p class="issue-message">Unused import</p>
+            <div class="suggestion">
+                <strong>💡 Fix:</strong> Remove unused imports
+            </div>
+        </div>
+        
+        <div class="issue-card" style="border-left: 4px solid #ff9900">
+            <div class="issue-header">
+                <span class="issue-number">#3</span>
+                <span class="badge" style="background:#ff9900">MEDIUM</span>
+                <span class="category">🐛 BUG</span>
+                <span class="line">Line 6</span>
+            </div>
+            <p class="issue-message">Division by zero</p>
+            <div class="suggestion">
+                <strong>💡 Fix:</strong> Add a check to handle division by zero
+            </div>
+        </div>
+        
+        <div class="issue-card" style="border-left: 4px solid #ffd700">
+            <div class="issue-header">
+                <span class="issue-number">#4</span>
+                <span class="badge" style="background:#ffd700">LOW</span>
+                <span class="category">✏️ STYLE</span>
+                <span class="line">Line 9</span>
+            </div>
+            <p class="issue-message">Unused function</p>
+            <div class="suggestion">
+                <strong>💡 Fix:</strong> Remove unused functions
+            </div>
+        </div>
+        
+        <div class="issue-card" style="border-left: 4px solid #ffd700">
+            <div class="issue-header">
+                <span class="issue-number">#5</span>
+                <span class="badge" style="background:#ffd700">LOW</span>
+                <span class="category">✏️ STYLE</span>
+                <span class="line">Line 14</span>
+            </div>
+            <p class="issue-message">Missing final newline</p>
+            <div class="suggestion">
+                <strong>💡 Fix:</strong> Add a final newline at the end of the file
+            </div>
+        </div>
+        
+    </div>
+
+    
+    <div class="fixed-code-section">
+        <div class="section-title">✅ Suggested Fixed Code</div>
+        <pre>import os
+
+def divide(a, b):
+    if b == 0:
+        raise ZeroDivisionError("Cannot divide by zero")
+    return a / b
+
+result = divide(10, 2)
+print(result)</pre>
+    </div>
+    
+
+    <div class="footer">
+        Generated by Code Review Agent — Pylint + Bandit + LLM
+    </div>
+
+</div>
+</body>
+</html>
