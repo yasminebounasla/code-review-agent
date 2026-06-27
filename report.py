@@ -1,349 +1,388 @@
 import json
 from datetime import datetime
 
-# ============================================================
-# COULEURS PAR SÉVÉRITÉ
-# ============================================================
-
 SEVERITY_COLORS = {
-    "HIGH":   "#ff4d4d",
-    "MEDIUM": "#ff9900",
-    "LOW":    "#ffd700",
-    "INFO":   "#4d94ff"
+    "HIGH":   "#f87171",
+    "MEDIUM": "#fb923c",
+    "LOW":    "#facc15",
+    "INFO":   "#60a5fa"
+}
+
+SEVERITY_BG = {
+    "HIGH":   "rgba(248,113,113,0.08)",
+    "MEDIUM": "rgba(251,146,60,0.08)",
+    "LOW":    "rgba(250,204,21,0.06)",
+    "INFO":   "rgba(96,165,250,0.08)"
 }
 
 CATEGORY_ICONS = {
-    "security":    "🔒",
-    "bug":         "🐛",
-    "logic":       "🧠",
-    "style":       "✏️",
-    "performance": "⚡"
+    "security":    "⬡",
+    "bug":         "◈",
+    "logic":       "◎",
+    "style":       "▣",
+    "performance": "◐"
 }
 
-# ============================================================
-# GÉNÉRATION DU RAPPORT HTML
-# ============================================================
-
 def generate_html_report(report: dict, target: str) -> str:
-    """
-    Prend le dict retourné par l'agent et génère un fichier HTML lisible.
-    """
-
     score = report.get("score", 0)
     summary = report.get("summary", "")
     issues = report.get("issues", [])
     fixed_code = report.get("fixed_code", "")
 
-    # Couleur du score selon la valeur
     if score >= 7:
-        score_color = "#4caf50"   # vert
+        score_color = "#4ade80"
+        score_label = "Good"
     elif score >= 4:
-        score_color = "#ff9900"   # orange
+        score_color = "#fb923c"
+        score_label = "Needs Work"
     else:
-        score_color = "#ff4d4d"   # rouge
+        score_color = "#f87171"
+        score_label = "Poor"
 
-    # Générer les cartes d'issues
-    issues_html = ""
-    for i, issue in enumerate(issues, 1):
-        severity = issue.get("severity", "INFO")
-        category = issue.get("category", "style")
-        color = SEVERITY_COLORS.get(severity, "#888")
-        icon = CATEGORY_ICONS.get(category, "📌")
-
-        issues_html += f"""
-        <div class="issue-card" style="border-left: 4px solid {color}">
-            <div class="issue-header">
-                <span class="issue-number">#{i}</span>
-                <span class="badge" style="background:{color}">{severity}</span>
-                <span class="category">{icon} {category.upper()}</span>
-                <span class="line">Line {issue.get('line', 'N/A')}</span>
-            </div>
-            <p class="issue-message">{issue.get('message', '')}</p>
-            <div class="suggestion">
-                <strong>💡 Fix:</strong> {issue.get('suggestion', '')}
-            </div>
-        </div>
-        """
-
-    # Compter par sévérité
     high   = sum(1 for i in issues if i.get("severity") == "HIGH")
     medium = sum(1 for i in issues if i.get("severity") == "MEDIUM")
     low    = sum(1 for i in issues if i.get("severity") == "LOW")
     info   = sum(1 for i in issues if i.get("severity") == "INFO")
 
-    # HTML complet
+    # Build issues HTML
+    issues_html = ""
+    for i, issue in enumerate(issues, 1):
+        severity = issue.get("severity", "INFO")
+        category = issue.get("category", "style")
+        color = SEVERITY_COLORS.get(severity, "#888")
+        bg = SEVERITY_BG.get(severity, "rgba(255,255,255,0.03)")
+        icon = CATEGORY_ICONS.get(category, "◆")
+        line = issue.get("line")
+        line_str = f"L{line}" if line else "—"
+
+        issues_html += f"""
+        <div class="issue" style="--accent:{color};--bg:{bg}">
+            <div class="issue-meta">
+                <span class="issue-index">{i:02d}</span>
+                <span class="issue-sev" style="color:{color}">{severity}</span>
+                <span class="issue-cat">{icon} {category}</span>
+                <span class="issue-line">{line_str}</span>
+            </div>
+            <p class="issue-msg">{issue.get('message', '')}</p>
+            <div class="issue-fix">→ {issue.get('suggestion', '')}</div>
+        </div>"""
+
+    fixed_section = ""
+    if fixed_code:
+        fixed_section = f"""
+        <section class="fixed-section">
+            <div class="section-label">Suggested fix</div>
+            <pre><code>{fixed_code}</code></pre>
+        </section>"""
+
+    score_pct = int((score / 10) * 283)  # circumference of circle r=45
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Review Report</title>
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        
-        body {{
-            font-family: 'Segoe UI', sans-serif;
-            background: #0d0d0d;
-            color: #e0e0e0;
-            padding: 40px 20px;
-        }}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review — {target}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
 
-        .container {{
-            max-width: 900px;
-            margin: 0 auto;
-        }}
+  *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
 
-        /* HEADER */
-        .header {{
-            text-align: center;
-            margin-bottom: 40px;
-        }}
+  :root {{
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #1f1f1f;
+    --text: #e2e2e2;
+    --muted: #555;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }}
 
-        .header h1 {{
-            font-size: 2rem;
-            color: #fff;
-            margin-bottom: 8px;
-        }}
+  body {{
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }}
 
-        .header .target {{
-            color: #888;
-            font-size: 0.9rem;
-            font-family: monospace;
-        }}
+  /* ── TOP BAR ── */
+  .topbar {{
+    border-bottom: 1px solid var(--border);
+    padding: 18px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }}
+  .topbar-brand {{
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }}
+  .topbar-brand span {{ color: var(--text); }}
+  .topbar-date {{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }}
 
-        .header .date {{
-            color: #555;
-            font-size: 0.8rem;
-            margin-top: 4px;
-        }}
+  /* ── HERO ── */
+  .hero {{
+    padding: 64px 48px 48px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: start;
+    border-bottom: 1px solid var(--border);
+  }}
+  .hero-target {{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }}
+  .hero-summary {{
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: #c8c8c8;
+    max-width: 560px;
+  }}
 
-        /* SCORE */
-        .score-section {{
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 30px;
-            background: #1a1a1a;
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-        }}
+  /* Score ring */
+  .score-ring {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }}
+  .score-ring svg {{ transform: rotate(-90deg); }}
+  .score-ring-track {{ fill: none; stroke: var(--border); stroke-width: 3; }}
+  .score-ring-fill {{
+    fill: none;
+    stroke: {score_color};
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: {283 - score_pct};
+    transition: stroke-dashoffset 1s ease;
+  }}
+  .score-center {{
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }}
+  .score-wrap {{
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }}
+  .score-num {{
+    font-size: 28px;
+    font-weight: 600;
+    color: {score_color};
+    font-family: var(--mono);
+    line-height: 1;
+  }}
+  .score-denom {{
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }}
+  .score-verdict {{
+    font-size: 11px;
+    color: {score_color};
+    font-family: var(--mono);
+    letter-spacing: 0.06em;
+  }}
 
-        .score-circle {{
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 4px solid {score_color};
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }}
+  /* ── STATS BAR ── */
+  .statsbar {{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--border);
+  }}
+  .stat {{
+    padding: 28px 48px;
+    border-right: 1px solid var(--border);
+  }}
+  .stat:last-child {{ border-right: none; }}
+  .stat-n {{
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 6px;
+  }}
+  .stat-l {{
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }}
 
-        .score-number {{
-            font-size: 2rem;
-            font-weight: bold;
-            color: {score_color};
-        }}
+  /* ── ISSUES ── */
+  .issues-section {{
+    padding: 48px;
+  }}
+  .section-label {{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }}
 
-        .score-label {{
-            font-size: 0.7rem;
-            color: #888;
-        }}
+  .issue {{
+    background: var(--bg);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 10px;
+    background: var(--bg);
+  }}
+  .issue-meta {{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+  }}
+  .issue-index {{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }}
+  .issue-sev {{
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+  }}
+  .issue-cat {{
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }}
+  .issue-line {{
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }}
+  .issue-msg {{
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.55;
+    margin-bottom: 10px;
+  }}
+  .issue-fix {{
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    padding-left: 0;
+  }}
 
-        .summary {{
-            flex: 1;
-            color: #ccc;
-            line-height: 1.6;
-            font-size: 0.95rem;
-        }}
+  /* ── FIXED CODE ── */
+  .fixed-section {{
+    padding: 0 48px 48px;
+  }}
+  pre {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: #a3e635;
+  }}
 
-        /* STATS */
-        .stats {{
-            display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
-        }}
-
-        .stat-card {{
-            flex: 1;
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-        }}
-
-        .stat-number {{
-            font-size: 1.8rem;
-            font-weight: bold;
-        }}
-
-        .stat-label {{
-            font-size: 0.75rem;
-            color: #888;
-            margin-top: 4px;
-        }}
-
-        /* ISSUES */
-        .section-title {{
-            font-size: 1.1rem;
-            color: #fff;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #222;
-        }}
-
-        .issue-card {{
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-        }}
-
-        .issue-header {{
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }}
-
-        .issue-number {{
-            color: #555;
-            font-size: 0.85rem;
-            font-family: monospace;
-        }}
-
-        .badge {{
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: #000;
-        }}
-
-        .category {{
-            font-size: 0.8rem;
-            color: #aaa;
-        }}
-
-        .line {{
-            margin-left: auto;
-            font-size: 0.8rem;
-            color: #555;
-            font-family: monospace;
-        }}
-
-        .issue-message {{
-            color: #ddd;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }}
-
-        .suggestion {{
-            background: #111;
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 0.85rem;
-            color: #aaa;
-            line-height: 1.5;
-        }}
-
-        /* FIXED CODE */
-        .fixed-code-section {{
-            margin-top: 30px;
-        }}
-
-        pre {{
-            background: #111;
-            border-radius: 12px;
-            padding: 20px;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            color: #a8ff78;
-            border: 1px solid #222;
-        }}
-
-        /* FOOTER */
-        .footer {{
-            text-align: center;
-            margin-top: 40px;
-            color: #333;
-            font-size: 0.8rem;
-        }}
-    </style>
+  /* ── FOOTER ── */
+  .footer {{
+    padding: 24px 48px 0;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }}
+</style>
 </head>
 <body>
-<div class="container">
 
-    <div class="header">
-        <h1>🔍 Code Review Report</h1>
-        <div class="target">{target}</div>
-        <div class="date">Generated on {datetime.now().strftime("%Y-%m-%d %H:%M")}</div>
-    </div>
-
-    <div class="score-section">
-        <div class="score-circle">
-            <span class="score-number">{score}</span>
-            <span class="score-label">/ 10</span>
-        </div>
-        <div class="summary">{summary}</div>
-    </div>
-
-    <div class="stats">
-        <div class="stat-card">
-            <div class="stat-number" style="color:#ff4d4d">{high}</div>
-            <div class="stat-label">HIGH</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" style="color:#ff9900">{medium}</div>
-            <div class="stat-label">MEDIUM</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" style="color:#ffd700">{low}</div>
-            <div class="stat-label">LOW</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" style="color:#4d94ff">{info}</div>
-            <div class="stat-label">INFO</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" style="color:#fff">{len(issues)}</div>
-            <div class="stat-label">TOTAL</div>
-        </div>
-    </div>
-
-    <div class="issues-section">
-        <div class="section-title">⚠️ Issues Found ({len(issues)})</div>
-        {issues_html}
-    </div>
-
-    {"" if not fixed_code else f'''
-    <div class="fixed-code-section">
-        <div class="section-title">✅ Suggested Fixed Code</div>
-        <pre>{fixed_code}</pre>
-    </div>
-    '''}
-
-    <div class="footer">
-        Generated by Code Review Agent — Pylint + Bandit + LLM
-    </div>
-
+<div class="topbar">
+  <div class="topbar-brand">code-review-agent / <span>report</span></div>
+  <div class="topbar-date">{datetime.now().strftime("%Y-%m-%d %H:%M")}</div>
 </div>
+
+<div class="hero">
+  <div>
+    <div class="hero-target">{target}</div>
+    <p class="hero-summary">{summary}</p>
+  </div>
+  <div class="score-ring">
+    <div class="score-wrap">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <circle class="score-ring-track" cx="50" cy="50" r="45"/>
+        <circle class="score-ring-fill" cx="50" cy="50" r="45"/>
+      </svg>
+      <div class="score-center">
+        <span class="score-num">{score}</span>
+        <span class="score-denom">/10</span>
+      </div>
+    </div>
+    <span class="score-verdict">{score_label}</span>
+  </div>
+</div>
+
+<div class="statsbar">
+  <div class="stat">
+    <div class="stat-n" style="color:#f87171">{high}</div>
+    <div class="stat-l">High</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" style="color:#fb923c">{medium}</div>
+    <div class="stat-l">Medium</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" style="color:#facc15">{low}</div>
+    <div class="stat-l">Low</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" style="color:#60a5fa">{info}</div>
+    <div class="stat-l">Info</div>
+  </div>
+</div>
+
+<section class="issues-section">
+  <div class="section-label">{len(issues)} issue{'s' if len(issues) != 1 else ''} found</div>
+  {issues_html}
+</section>
+
+{fixed_section}
+
+<div class="footer">
+  Pylint · Bandit · llama-3.3-70b-versatile via Groq
+</div>
+
 </body>
 </html>"""
-
     return html
 
 
 def save_report(report: dict, target: str, output_path: str = "report.html"):
-    """
-    Génère et sauvegarde le rapport HTML dans un fichier.
-    """
     html = generate_html_report(report, target)
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
