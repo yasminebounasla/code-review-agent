@@ -1,337 +1,402 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Review Report</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #0d0d0d;
-            color: #e0e0e0;
-            padding: 40px 20px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review — sample_project/</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* HEADER */
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #1f1f1f;
+    --text: #e2e2e2;
+    --muted: #555;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
 
-        .header h1 {
-            font-size: 2rem;
-            color: #fff;
-            margin-bottom: 8px;
-        }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
 
-        .header .target {
-            color: #888;
-            font-size: 0.9rem;
-            font-family: monospace;
-        }
+  /* ── TOP BAR ── */
+  .topbar {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-brand {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .topbar-brand span { color: var(--text); }
+  .topbar-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
 
-        .header .date {
-            color: #555;
-            font-size: 0.8rem;
-            margin-top: 4px;
-        }
+  /* ── HERO ── */
+  .hero {
+    padding: 64px 48px 48px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 40px;
+    align-items: start;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-target {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .hero-summary {
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: #c8c8c8;
+    max-width: 560px;
+  }
 
-        /* SCORE */
-        .score-section {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 30px;
-            background: #1a1a1a;
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
+  /* Score ring */
+  .score-ring {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring-track { fill: none; stroke: var(--border); stroke-width: 3; }
+  .score-ring-fill {
+    fill: none;
+    stroke: #f87171;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 199;
+    transition: stroke-dashoffset 1s ease;
+  }
+  .score-center {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-wrap {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-num {
+    font-size: 28px;
+    font-weight: 600;
+    color: #f87171;
+    font-family: var(--mono);
+    line-height: 1;
+  }
+  .score-denom {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+  .score-verdict {
+    font-size: 11px;
+    color: #f87171;
+    font-family: var(--mono);
+    letter-spacing: 0.06em;
+  }
 
-        .score-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 4px solid #ff9900;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
+  /* ── STATS BAR ── */
+  .statsbar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat {
+    padding: 28px 48px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-n {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-l {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 
-        .score-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ff9900;
-        }
+  /* ── ISSUES ── */
+  .issues-section {
+    padding: 48px;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
 
-        .score-label {
-            font-size: 0.7rem;
-            color: #888;
-        }
+  .issue {
+    background: var(--bg);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 10px;
+    background: var(--bg);
+  }
+  .issue-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+  .issue-index {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .issue-sev {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+  }
+  .issue-cat {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .issue-line {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .issue-msg {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.55;
+    margin-bottom: 10px;
+  }
+  .issue-fix {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    padding-left: 0;
+  }
 
-        .summary {
-            flex: 1;
-            color: #ccc;
-            line-height: 1.6;
-            font-size: 0.95rem;
-        }
+  /* ── FIXED CODE ── */
+  .fixed-section {
+    padding: 0 48px 48px;
+  }
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: #a3e635;
+  }
 
-        /* STATS */
-        .stats {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            flex: 1;
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #888;
-            margin-top: 4px;
-        }
-
-        /* ISSUES */
-        .section-title {
-            font-size: 1.1rem;
-            color: #fff;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #222;
-        }
-
-        .issue-card {
-            background: #1a1a1a;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-        }
-
-        .issue-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-
-        .issue-number {
-            color: #555;
-            font-size: 0.85rem;
-            font-family: monospace;
-        }
-
-        .badge {
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            color: #000;
-        }
-
-        .category {
-            font-size: 0.8rem;
-            color: #aaa;
-        }
-
-        .line {
-            margin-left: auto;
-            font-size: 0.8rem;
-            color: #555;
-            font-family: monospace;
-        }
-
-        .issue-message {
-            color: #ddd;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
-
-        .suggestion {
-            background: #111;
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 0.85rem;
-            color: #aaa;
-            line-height: 1.5;
-        }
-
-        /* FIXED CODE */
-        .fixed-code-section {
-            margin-top: 30px;
-        }
-
-        pre {
-            background: #111;
-            border-radius: 12px;
-            padding: 20px;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            color: #a8ff78;
-            border: 1px solid #222;
-        }
-
-        /* FOOTER */
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: #333;
-            font-size: 0.8rem;
-        }
-    </style>
+  /* ── FOOTER ── */
+  .footer {
+    padding: 24px 48px 0;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
 </head>
 <body>
-<div class="container">
 
-    <div class="header">
-        <h1>🔍 Code Review Report</h1>
-        <div class="target">sample.py</div>
-        <div class="date">Generated on 2026-06-23 08:29</div>
-    </div>
-
-    <div class="score-section">
-        <div class="score-circle">
-            <span class="score-number">4</span>
-            <span class="score-label">/ 10</span>
-        </div>
-        <div class="summary">The code has several issues, including a hardcoded password, unused imports, and a missing final newline. The divide function does not handle division by zero and the unused_function is unnecessary. The code does not follow PEP 8 conventions and has several warnings.</div>
-    </div>
-
-    <div class="stats">
-        <div class="stat-card">
-            <div class="stat-number" style="color:#ff4d4d">1</div>
-            <div class="stat-label">HIGH</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" style="color:#ff9900">1</div>
-            <div class="stat-label">MEDIUM</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" style="color:#ffd700">3</div>
-            <div class="stat-label">LOW</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" style="color:#4d94ff">0</div>
-            <div class="stat-label">INFO</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number" style="color:#fff">5</div>
-            <div class="stat-label">TOTAL</div>
-        </div>
-    </div>
-
-    <div class="issues-section">
-        <div class="section-title">⚠️ Issues Found (5)</div>
-        
-        <div class="issue-card" style="border-left: 4px solid #ff4d4d">
-            <div class="issue-header">
-                <span class="issue-number">#1</span>
-                <span class="badge" style="background:#ff4d4d">HIGH</span>
-                <span class="category">🔒 SECURITY</span>
-                <span class="line">Line 4</span>
-            </div>
-            <p class="issue-message">Hardcoded password</p>
-            <div class="suggestion">
-                <strong>💡 Fix:</strong> Use environment variables or a secure method to store passwords
-            </div>
-        </div>
-        
-        <div class="issue-card" style="border-left: 4px solid #ffd700">
-            <div class="issue-header">
-                <span class="issue-number">#2</span>
-                <span class="badge" style="background:#ffd700">LOW</span>
-                <span class="category">✏️ STYLE</span>
-                <span class="line">Line 1</span>
-            </div>
-            <p class="issue-message">Unused import</p>
-            <div class="suggestion">
-                <strong>💡 Fix:</strong> Remove unused imports
-            </div>
-        </div>
-        
-        <div class="issue-card" style="border-left: 4px solid #ff9900">
-            <div class="issue-header">
-                <span class="issue-number">#3</span>
-                <span class="badge" style="background:#ff9900">MEDIUM</span>
-                <span class="category">🐛 BUG</span>
-                <span class="line">Line 6</span>
-            </div>
-            <p class="issue-message">Division by zero</p>
-            <div class="suggestion">
-                <strong>💡 Fix:</strong> Add a check to handle division by zero
-            </div>
-        </div>
-        
-        <div class="issue-card" style="border-left: 4px solid #ffd700">
-            <div class="issue-header">
-                <span class="issue-number">#4</span>
-                <span class="badge" style="background:#ffd700">LOW</span>
-                <span class="category">✏️ STYLE</span>
-                <span class="line">Line 9</span>
-            </div>
-            <p class="issue-message">Unused function</p>
-            <div class="suggestion">
-                <strong>💡 Fix:</strong> Remove unused functions
-            </div>
-        </div>
-        
-        <div class="issue-card" style="border-left: 4px solid #ffd700">
-            <div class="issue-header">
-                <span class="issue-number">#5</span>
-                <span class="badge" style="background:#ffd700">LOW</span>
-                <span class="category">✏️ STYLE</span>
-                <span class="line">Line 14</span>
-            </div>
-            <p class="issue-message">Missing final newline</p>
-            <div class="suggestion">
-                <strong>💡 Fix:</strong> Add a final newline at the end of the file
-            </div>
-        </div>
-        
-    </div>
-
-    
-    <div class="fixed-code-section">
-        <div class="section-title">✅ Suggested Fixed Code</div>
-        <pre>import os
-
-def divide(a, b):
-    if b == 0:
-        raise ZeroDivisionError("Cannot divide by zero")
-    return a / b
-
-result = divide(10, 2)
-print(result)</pre>
-    </div>
-    
-
-    <div class="footer">
-        Generated by Code Review Agent — Pylint + Bandit + LLM
-    </div>
-
+<div class="topbar">
+  <div class="topbar-brand">code-review-agent / <span>report</span></div>
+  <div class="topbar-date">2026-06-27 10:18</div>
 </div>
+
+<div class="hero">
+  <div>
+    <div class="hero-target">sample_project/</div>
+    <p class="hero-summary">The codebase has critical security vulnerabilities including hardcoded credentials, SQL injection exposure, and use of shell=True in subprocess calls. Multiple functions lack error handling and the password hashing relies on MD5, which is not suitable for storing passwords.</p>
+  </div>
+  <div class="score-ring">
+    <div class="score-wrap">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <circle class="score-ring-track" cx="50" cy="50" r="45"/>
+        <circle class="score-ring-fill" cx="50" cy="50" r="45"/>
+      </svg>
+      <div class="score-center">
+        <span class="score-num">3</span>
+        <span class="score-denom">/10</span>
+      </div>
+    </div>
+    <span class="score-verdict">Poor</span>
+  </div>
+</div>
+
+<div class="statsbar">
+  <div class="stat">
+    <div class="stat-n" style="color:#f87171">4</div>
+    <div class="stat-l">High</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" style="color:#fb923c">3</div>
+    <div class="stat-l">Medium</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" style="color:#facc15">2</div>
+    <div class="stat-l">Low</div>
+  </div>
+  <div class="stat">
+    <div class="stat-n" style="color:#60a5fa">1</div>
+    <div class="stat-l">Info</div>
+  </div>
+</div>
+
+<section class="issues-section">
+  <div class="section-label">10 issues found</div>
+  
+        <div class="issue" style="--accent:#f87171;--bg:rgba(248,113,113,0.08)">
+            <div class="issue-meta">
+                <span class="issue-index">01</span>
+                <span class="issue-sev" style="color:#f87171">HIGH</span>
+                <span class="issue-cat">⬡ security</span>
+                <span class="issue-line">L4</span>
+            </div>
+            <p class="issue-msg">SECRET_KEY and DB_PASSWORD are hardcoded as plain strings in the source code.</p>
+            <div class="issue-fix">→ Move all secrets to environment variables and load via os.environ or dotenv.</div>
+        </div>
+        <div class="issue" style="--accent:#f87171;--bg:rgba(248,113,113,0.08)">
+            <div class="issue-meta">
+                <span class="issue-index">02</span>
+                <span class="issue-sev" style="color:#f87171">HIGH</span>
+                <span class="issue-cat">⬡ security</span>
+                <span class="issue-line">L14</span>
+            </div>
+            <p class="issue-msg">Password hashing uses MD5, which is cryptographically broken and should never be used for passwords.</p>
+            <div class="issue-fix">→ Use bcrypt or hashlib.scrypt with a salt instead.</div>
+        </div>
+        <div class="issue" style="--accent:#f87171;--bg:rgba(248,113,113,0.08)">
+            <div class="issue-meta">
+                <span class="issue-index">03</span>
+                <span class="issue-sev" style="color:#f87171">HIGH</span>
+                <span class="issue-cat">⬡ security</span>
+                <span class="issue-line">L19</span>
+            </div>
+            <p class="issue-msg">SQL query is built by string concatenation — direct SQL injection vulnerability.</p>
+            <div class="issue-fix">→ Use parameterized queries: cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))</div>
+        </div>
+        <div class="issue" style="--accent:#f87171;--bg:rgba(248,113,113,0.08)">
+            <div class="issue-meta">
+                <span class="issue-index">04</span>
+                <span class="issue-sev" style="color:#f87171">HIGH</span>
+                <span class="issue-cat">⬡ security</span>
+                <span class="issue-line">L23</span>
+            </div>
+            <p class="issue-msg">subprocess.call with shell=True and unsanitized user input allows arbitrary command execution.</p>
+            <div class="issue-fix">→ Never pass user input to shell commands. Use shell=False and pass arguments as a list.</div>
+        </div>
+        <div class="issue" style="--accent:#fb923c;--bg:rgba(251,146,60,0.08)">
+            <div class="issue-meta">
+                <span class="issue-index">05</span>
+                <span class="issue-sev" style="color:#fb923c">MEDIUM</span>
+                <span class="issue-cat">◈ bug</span>
+                <span class="issue-line">L15</span>
+            </div>
+            <p class="issue-msg">login() returns None implicitly when credentials don't match instead of returning False.</p>
+            <div class="issue-fix">→ Add an explicit return False at the end of the function.</div>
+        </div>
+        <div class="issue" style="--accent:#fb923c;--bg:rgba(251,146,60,0.08)">
+            <div class="issue-meta">
+                <span class="issue-index">06</span>
+                <span class="issue-sev" style="color:#fb923c">MEDIUM</span>
+                <span class="issue-cat">◈ bug</span>
+                <span class="issue-line">L38</span>
+            </div>
+            <p class="issue-msg">divide_all() will raise ZeroDivisionError if divisor is 0, with no error handling.</p>
+            <div class="issue-fix">→ Check if divisor == 0 before the loop and raise a clear ValueError.</div>
+        </div>
+        <div class="issue" style="--accent:#fb923c;--bg:rgba(251,146,60,0.08)">
+            <div class="issue-meta">
+                <span class="issue-index">07</span>
+                <span class="issue-sev" style="color:#fb923c">MEDIUM</span>
+                <span class="issue-cat">◐ performance</span>
+                <span class="issue-line">L29</span>
+            </div>
+            <p class="issue-msg">process_list() uses a nested O(n²) loop to find duplicates — unnecessary for this task.</p>
+            <div class="issue-fix">→ Use a Counter or set to find duplicates in O(n): seen = set(); dupes = [x for x in items if items.count(x) > 1]</div>
+        </div>
+        <div class="issue" style="--accent:#facc15;--bg:rgba(250,204,21,0.06)">
+            <div class="issue-meta">
+                <span class="issue-index">08</span>
+                <span class="issue-sev" style="color:#facc15">LOW</span>
+                <span class="issue-cat">◈ bug</span>
+                <span class="issue-line">L33</span>
+            </div>
+            <p class="issue-msg">read_config() opens a file without closing it — resource leak.</p>
+            <div class="issue-fix">→ Use a context manager: with open(path) as f: content = f.read()</div>
+        </div>
+        <div class="issue" style="--accent:#facc15;--bg:rgba(250,204,21,0.06)">
+            <div class="issue-meta">
+                <span class="issue-index">09</span>
+                <span class="issue-sev" style="color:#facc15">LOW</span>
+                <span class="issue-cat">▣ style</span>
+                <span class="issue-line">L8</span>
+            </div>
+            <p class="issue-msg">Multiple imports on one line (import hashlib, os, json, re) against PEP 8.</p>
+            <div class="issue-fix">→ One import per line.</div>
+        </div>
+        <div class="issue" style="--accent:#60a5fa;--bg:rgba(96,165,250,0.08)">
+            <div class="issue-meta">
+                <span class="issue-index">10</span>
+                <span class="issue-sev" style="color:#60a5fa">INFO</span>
+                <span class="issue-cat">◎ logic</span>
+                <span class="issue-line">—</span>
+            </div>
+            <p class="issue-msg">validate_email() only checks for '@' — not a real email validator.</p>
+            <div class="issue-fix">→ Use re.match or the email-validator package for proper validation.</div>
+        </div>
+</section>
+
+
+
+<div class="footer">
+  Pylint · Bandit · llama-3.3-70b-versatile via Groq
+</div>
+
 </body>
 </html>
