@@ -32,14 +32,14 @@ The key idea: **tools for precision, LLM for understanding.** Pylint and Bandit 
 - ✅ Security scanning with **Bandit** (hardcoded secrets, dangerous functions)
 - ✅ LLM reasoning layer (logic bugs, edge cases, architecture issues)
 - ✅ Structured output: score /10, severity levels, fix suggestions
-- ✅ Visual HTML report (dark theme)
-- ✅ Optional JSON export
+- ✅ Visual HTML report
+- ✅ Optional JSON export (`--json`)
 
 ## Setup
 
 ```bash
 # Clone the repo
-git clone https://github.com/yasminebounasla/code-review-agent
+git clone https://github.com/YOUR_USERNAME/code-review-agent
 cd code-review-agent
 
 # Install dependencies
@@ -50,6 +50,8 @@ echo "GROQ_API_KEY=your_key_here" > .env
 ```
 
 Get a free Groq API key at [console.groq.com](https://console.groq.com).
+
+> **Note:** Groq was chosen over OpenAI/Gemini because the agent makes multiple LLM calls per review (one per iteration of the loop), so speed matters. The Gemini free tier also has geographic restrictions that blocked access during development.
 
 ## Usage
 
@@ -66,10 +68,10 @@ python cli.py review https://github.com/owner/repo/pull/123
 # Custom output filename
 python cli.py review sample.py --output my_report.html
 
-# Print to terminal only (no HTML)
+# Print to terminal only, no HTML saved
 python cli.py review sample.py --no-html
 
-# Also export JSON report
+# Also export a JSON report
 python cli.py review sample.py --json
 ```
 
@@ -133,12 +135,15 @@ The HTML report also includes the corrected version of the code.
 
 ```
 code-review-agent/
-├── agent.py      # Agentic loop — the core logic
-├── tools.py      # Tool implementations + JSON definitions for the LLM
-├── report.py     # HTML report generator
-├── cli.py        # CLI interface (argparse)
-├── sample.py     # Deliberately buggy file for testing
-├── .env          # Your GROQ_API_KEY (not committed)
+├── agent.py          # Agentic loop — the core logic
+├── tools.py          # Tool implementations + JSON definitions for the LLM
+├── report.py         # HTML report generator
+├── cli.py            # CLI interface (argparse)
+├── sample.py         # Deliberately buggy file for testing
+├── sample_project/   # Multi-file test directory
+│   ├── auth.py
+│   └── utils.py
+├── .env              # Your GROQ_API_KEY (not committed)
 └── README.md
 ```
 
@@ -151,7 +156,11 @@ code-review-agent/
 | Security analysis | Bandit                               |
 | CLI               | argparse (stdlib)                    |
 | HTTP              | urllib (stdlib)                      |
-| Config            | python-doten                         |
+| Config            | python-dotenv                        |
 
-Groq was chosen for its speed — the agent makes multiple LLM calls per review (one per iteration), so latency matters. `llama-3.3-70b-versatile` gives a good balance of reasoning quality and speed.
+## What I'd do next
 
+- **More languages** — JavaScript with ESLint, TypeScript, etc. The tool architecture already supports it, just need to add the right static analysis tools per language.
+- **GitHub Action** — run the agent automatically on every PR and post the issues as inline review comments. The GitHub PR support is already there; the last step is posting results back via the API.
+- **Smarter directory reviews** — right now the agent reviews all files together. For large projects it would be better to review file by file and aggregate the results, so the context window doesn't get overwhelmed.
+- **Streaming output** — show the HTML report building in real time instead of waiting for the full agent loop to finish.
