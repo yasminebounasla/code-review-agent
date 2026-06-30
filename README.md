@@ -39,7 +39,7 @@ The key idea: **tools for precision, LLM for understanding.** Pylint and Bandit 
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/code-review-agent
+git clone https://github.com/yasminebounasla/code-review-agent
 cd code-review-agent
 
 # Install dependencies
